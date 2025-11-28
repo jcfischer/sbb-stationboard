@@ -46,251 +46,38 @@
   </div>
 </div>
 
-<!-- Darstellung (nur CSS) – Quadrant-Abmessungen -->
+<!-- Layout-specific CSS -->
 <style>
   :root { --gap-45: 10px; } /* kleiner Abstand zwischen Abfahrt (4) und Verspätung (5) */
 
-  /* Spaltenbreiten & Basis-Ausrichtung für Quadrant */
+  /* Column widths for quadrant layout */
   .col-sym    { width:6%;   text-align:left; }
   .col-lineno { width:8%;   text-align:left; }
   .col-linie  { width:25%;  text-align:left; }
   .col-abfahrt{ width:15%;  text-align:right; padding-right:0 !important; white-space:nowrap; }
   .col-delay  { width:20%;  text-align:right; white-space:nowrap; padding-left:var(--gap-45); }
   .col-losum  { width:10%;  text-align:right; padding-right:2px !important; white-space:nowrap; }
-
-  .table td.col-sym,
-  .table td.col-lineno,
-  .table td.col-linie,
-  .table td.col-abfahrt,
-  .table td.col-delay,
-  .table td.col-losum { vertical-align:middle; }
-
-  .table th.col-abfahrt,
-  .table th.col-losum { text-align:right !important; }
-  .table th.col-abfahrt .title,
-  .table th.col-losum .title { display:block; text-align:right !important; margin:0; }
-
-  .sr-only {
-    position:absolute !important;
-    width:1px; height:1px;
-    margin:-1px; padding:0; border:0;
-    clip:rect(0 0 0 0); overflow:hidden; white-space:nowrap;
-  }
-
-  .time { font-variant-numeric: tabular-nums; }
-  .table { border-collapse: separate; border-spacing: 0; }
 </style>
+
+{% include 'shared' %}
+
 <script>
-    /* -------- Liquid -> data-Attribute -------- */
-    document.body.setAttribute('data-station', '{{ station }}');
-    document.body.setAttribute('data-station_id', '{{ station_id }}');
-    document.body.setAttribute('data-walkingtime', '{{ walkingTime }}');
-    document.body.setAttribute('data-abbrs', `{{ abbr_string }}`);
-    document.body.setAttribute('data-hidewords', `{{ hidewords }}`);
-    document.body.setAttribute('data-linetargetfilter', `{{ linetarget_filter }}`);
-    document.body.setAttribute('data-mindepartureoffset', '{{ minDepartureOffset }}');
-    document.body.setAttribute('data-hidegroups', `{{ transportHideGroups }}`);
-    document.body.setAttribute('data-cablewayicon', `{{ cablewayIcon }}`); /* neues Feld */
+  /* -------- Liquid -> data-Attribute -------- */
+  document.body.setAttribute('data-station', '{{ station }}');
+  document.body.setAttribute('data-station_id', '{{ station_id }}');
+  document.body.setAttribute('data-walkingtime', '{{ walkingTime }}');
+  document.body.setAttribute('data-abbrs', `{{ abbr_string }}`);
+  document.body.setAttribute('data-hidewords', `{{ hidewords }}`);
+  document.body.setAttribute('data-linetargetfilter', `{{ linetarget_filter }}`);
+  document.body.setAttribute('data-mindepartureoffset', '{{ minDepartureOffset }}');
+  document.body.setAttribute('data-hidegroups', `{{ transportHideGroups }}`);
+  document.body.setAttribute('data-cablewayicon', `{{ cablewayIcon }}`);
 
-    /* -------- Helper -------- */
-    function isBlank(v) { if (v == null) return true; const s = String(v).trim(); return s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined'; }
-    function getData(attr, fb = '') { const v = document.body.getAttribute(attr); if (isBlank(v) || String(v).trim() === '0') return fb; return String(v).trim(); }
-    function toInt(v, fb = 0) { if (isBlank(v) || String(v).trim() === '0') return 0; const n = parseInt(String(v).trim(), 10); return Number.isFinite(n) ? n : fb; }
-    function getDataFromAny(v) { if (v == null) return ''; const s = String(v).trim(); if (s === '' || s === '0' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return ''; return s; }
-    function parseCsv(v) { const s = getDataFromAny(v); if (!s) return []; return s.split(/[,\n]/).map(x => x.trim()).filter(Boolean); }
-    function parseAbbrPairs(v) {
-        const raw = getDataFromAny(v); if (!raw) return [];
-        return raw.split(/[,\n]/).map(x => x.trim()).filter(Boolean).map(t => {
-            const i = t.indexOf('=');
-            if (i === -1) return null;
-            const full = t.slice(0, i).trim(), abbr = t.slice(i + 1).trim();
-            return (full && abbr) ? [full, abbr] : null;
-        }).filter(Boolean);
-    }
-    function esc(t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  /* -------- Inject stationboard data -------- */
+  window.stationboardData = {
+    stationboard: {{ stationboard | json }}
+  };
 
-    /* -------- Icons & Gruppen -------- */
-    function mapCategoryToGroup(category) {
-        const c = String(category || '').toUpperCase();
-        if (["IC", "IR", "S", "RE", "EC", "EXT", "R", "RJ", "PE", "ICE", "TGV", "D", "RB", "REX"].includes(c)) return "train";
-        if (["T", "TRAM"].includes(c)) return "tram";
-        if (["BUS", "B", "NFB", "SN"].includes(c)) return "bus";
-        if (["BAT", "SHIP", "BOAT", "FERRY"].includes(c)) return "ship";
-        if (["CABLEWAY", "ROPEWAY", "AERIALWAY", "LIFT", "GONDOLA", "FUN", "FUNICULAR"].includes(c)) return "cableway";
-        return "";
-    }
-
-    function getCablewayIconHtml() {
-        const pref = String(getData('data-cablewayicon', 'Gondel')).toLowerCase();
-        if (pref === 'zahnradbahn') {
-            return '<img class="image" src="https://img.icons8.com/ios/25/funicular.png" alt="funicular" style="height:25px;vertical-align:middle;" />';
-        }
-        return '<img class="image" src="https://img.icons8.com/ios/25/cable-car.png" alt="cable-car" style="height:25px;vertical-align:middle;" />';
-    }
-
-    function getLineSymbol(category) {
-        const c = String(category || '').toUpperCase();
-        if (c === "T" || c === "TRAM")
-            return '<img class="image" src="https://img.icons8.com/ios/25/tram.png" style="height:25px;vertical-align:middle;" />';
-        if (["IC", "IR", "S", "RE", "EC", "EXT", "R", "RJ", "PE", "ICE"].includes(c))
-            return '<img class="image" src="https://img.icons8.com/ios-filled/25/train.png" style="height:25px;vertical-align:middle;" />';
-        if (["BUS", "NFB", "SN", "B"].includes(c))
-            return '<img class="image" src="https://img.icons8.com/ios-filled/25/bus.png" style="height:25px;vertical-align:middle;" />';
-        const g = mapCategoryToGroup(c);
-        if (g === "ship")
-            return '<img class="image" src="https://img.icons8.com/ios/25/water-transportation.png" style="height:25px;vertical-align:middle;" />';
-        if (g === "cableway")
-            return getCablewayIconHtml();
-        return '<img class="image" src="https://img.icons8.com/ios-filled/25/bus.png" style="height:25px;vertical-align:middle;" />';
-    }
-
-    /* -------- Textaufbereitung -------- */
-    function cleanTarget(text, hidewords, abbrList) {
-        let out = String(text || '');
-        const hw = Array.isArray(hidewords) ? hidewords : [];
-        if (hw.length > 0) {
-            hw.forEach(w => {
-                if (w && String(w).trim() !== '') {
-                    const word = String(w).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const safe = new RegExp("\\b" + word + "\\b(\\s+\\S+){0,2}\\s+Bahnhof", "i");
-                    if (!safe.test(out)) {
-                        const re = new RegExp("\\b" + word + "\\b", "gi");
-                        out = out.replace(re, "");
-                    }
-                }
-            });
-            out = out.replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/(^[,\s]+|[,\s]+$)/g, "");
-        }
-        const pairs = Array.isArray(abbrList) ? abbrList : [];
-        if (pairs.length > 0) {
-            pairs.forEach(([full, abbr]) => {
-                if (!full || !abbr) return;
-                const escf = String(full).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                out = out.replace(new RegExp("\\b" + escf + "\\b", "gi"), abbr);
-            });
-        }
-        return out;
-    }
-
-    function getTargetPrefix(target) {
-        const t = String(target || ''); const parts = t.split(",");
-        const part = (parts.length > 1 ? parts[1] : parts[0] || '').trim();
-        return (part.substring(0, 3) || '').toLowerCase();
-    }
-
-    const CATEGORY_PREFIX_SET = new Set(["IC", "IR", "S", "RE", "EC", "EXT", "R", "RJ", "PE", "ICE", "SN"]);
-    function formatLineNumber(category, number) {
-        const cat = String(category || "").toUpperCase().trim();
-        let num = String(number || "").trim(); if (!num) return "";
-        const compact = num.replace(/\s+/g, "");
-        if (CATEGORY_PREFIX_SET.has(cat)) {
-            if (compact.toUpperCase().startsWith(cat)) return compact;
-            return cat + compact.replace(/^[A-Za-z]+/, "");
-        }
-        return compact;
-    }
-
-    function parseHiddenGroups(v) { return parseCsv(v).map(s => s.toLowerCase()); }
-
-
-
-    let _cachedStationName = null, _cachedStationId = null, _inFlight = false;
-
-
-
-    function fetchDepartures() {
-        // we get the data from the stationboard call in the "station" and "stationboard" variables
-        const tbody = document.getElementById('departures-body');
-
-
-        const station = getData('data-station', 'Zürich, Im Hagacker');
-        const station_id = getData('data-station_id', '8591209');
-        const walkingTime = toInt(getData('data-walkingtime'), 0);
-        const minOffset = toInt(getData('data-mindepartureoffset'), 0);
-
-        const abbrList = parseAbbrPairs(getData('data-abbrs'));
-        const hidewords = parseCsv(getData('data-hidewords'));
-        const filterList = parseCsv(getData('data-linetargetfilter')).map(s => s.toLowerCase());
-        const hidden = parseHiddenGroups(getData('data-hidegroups'));
-        const data = {};
-        data['stationboard'] = {{ stationboard | json }}
-    
-
-    if (isBlank(station) || isBlank(station_id)) {
-        tbody.innerHTML = `<tr><td colspan="6"><span class="label label--small" style="color:#d10505;">Keine Station konfiguriert.</span></td></tr>`;
-        return;
-    }
-
-
-    let rowsHtml = '';
-
-    if (!data || !Array.isArray(data.stationboard) || data.stationboard.length === 0) {
-        rowsHtml = `<tr><td colspan="6"><span class="label label--big">Keine Abfahrten gefunden</span></td></tr>`;
-        tbody.innerHTML = rowsHtml;
-        return;
-    }
-
-    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Zurich' };
-    const now = new Date();
-    const minDeparture = new Date(now.getTime() + (minOffset || 0) * 60000);
-
-    let shown = 0;
-    const maxRows = 5;
-
-    for (const entry of data.stationboard) {
-        if (shown >= maxRows) break;
-
-        const category = entry?.category || "";
-        const group = mapCategoryToGroup(category);
-        if (hidden.includes(group)) continue;
-        if (hidden.includes(String(category).toLowerCase())) continue;
-
-        const depRaw = entry?.stop?.departure || '';
-        const departureTime = new Date(depRaw);
-        if (!(departureTime instanceof Date) || isNaN(departureTime)) continue;
-        if (departureTime < minDeparture) continue;
-
-        const lineNumber = formatLineNumber(category, entry?.number || "");
-        const target = entry?.to || "";
-        const filterCode = (lineNumber + getTargetPrefix(target)).toLowerCase();
-        if (filterList.includes(filterCode)) continue;
-
-        const displayTarget = cleanTarget(target, hidewords, abbrList);
-
-        let delayMinutes = 0, delayHtml = '';
-        const progRaw = entry?.stop?.prognosis?.departure || '';
-        if (!isBlank(progRaw)) {
-            const prog = new Date(progRaw);
-            if (prog instanceof Date && !isNaN(prog)) delayMinutes = Math.round((prog - departureTime) / 60000);
-        }
-        if (delayMinutes > 0) {
-            delayHtml = `<span class="label label--inverted label--big" style="font-weight:bold;">+${delayMinutes} min</span>`;
-        } else if (delayMinutes < 0) {
-            delayHtml = `<span class="label label--inverted label--big" style="font-weight:bold;">${delayMinutes} min</span>`;
-        }
-
-        const startOffset = Math.max(0, (walkingTime || 0) - delayMinutes);
-        const losUm = new Date(departureTime.getTime() - startOffset * 60000);
-
-        rowsHtml += `
-          <tr style="line-height:1.15;">
-            <td class="col-sym">${getLineSymbol(category)}</td>
-            <td class="col-lineno"><span class="label label--big">${esc(lineNumber)}</span></td>
-            <td class="col-linie"><span class="label label--big" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(displayTarget)}</span></td>
-            <td class="col-abfahrt"><span class="label label--big time">${departureTime.toLocaleTimeString('de-CH', timeOptions)}</span></td>
-            <td class="col-delay">${delayHtml}</td>
-            <td class="col-losum"><span class="label label--big time">${losUm.toLocaleTimeString('de-CH', timeOptions)}</span></td>
-          </tr>
-        `;
-        shown++;
-    }
-
-    if (shown === 0) {
-        rowsHtml = `<tr><td colspan="6"><span class="label label--big">Keine passenden Abfahrten gefunden</span></td></tr>`;
-    }
-    tbody.innerHTML = rowsHtml;
-   
-  }
-
-  fetchDepartures();
+  /* -------- Render with quadrant parameters -------- */
+  renderDepartures(5, 'big');
 </script>
