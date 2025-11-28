@@ -54,21 +54,19 @@ Each layout file contains:
    - CSS variable --gap-45 (spacing between columns)
    - Text alignment and padding
 
-4. **Shared code inclusion** (line 64)
-   - `{% include 'shared' %}` - Pulls in all common JavaScript and CSS
-
-5. **Layout-specific JavaScript** (lines 66-84)
+4. **Layout-specific JavaScript** (lines 64-82)
    - Set data attributes from Liquid variables
    - Inject stationboard data into window.stationboardData
    - Call renderDepartures(maxRows, labelSize) with layout-specific parameters
 
 ### Data Flow
 
-1. TRMNL polls `https://transport.opendata.ch/v1/stationboard?id={{station_id}}&limit=10`
-2. API returns JSON with stationboard data
-3. Liquid injects data into template: `{{ stationboard | json }}`
-4. JavaScript processes entries (filtering, sorting, formatting)
-5. HTML table is dynamically rendered in `#departures-body`
+1. TRMNL automatically prepends `shared.liquid` to each layout file
+2. TRMNL polls `https://transport.opendata.ch/v1/stationboard?id={{station_id}}&limit=10`
+3. API returns JSON with stationboard data
+4. Liquid injects data into template: `{{ stationboard | json }}`
+5. JavaScript (from shared.liquid + layout file) processes entries (filtering, sorting, formatting)
+6. HTML table is dynamically rendered in `#departures-body`
 
 ## Key Features
 
@@ -223,7 +221,7 @@ Text sizes controlled by class:
 
 **Refactored (Current State):**
 - Common code extracted to `shared.liquid` (helper functions, icon mapping, rendering logic, common CSS)
-- Layout files include shared code via `{% include 'shared' %}`
+- TRMNL automatically prepends `shared.liquid` to each layout file (no manual include needed)
 - Each layout calls `renderDepartures(maxRows, labelSize)` with specific parameters
 - Eliminates ~200+ lines of duplicate code per file
 - Single source of truth for business logic - changes apply to all layouts
