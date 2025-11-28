@@ -1,0 +1,78 @@
+---
+strategy: polling
+no_screen_padding: 'no'
+dark_mode: 'no'
+static_data: ''
+polling_verb: get
+polling_url: https://transport.opendata.ch/v1/stationboard?id={{station_id}}&limit=10
+polling_headers: ''
+polling_body: ''
+id: 166116
+custom_fields:
+- keyname: doesnt_matter
+  name: About This Plugin
+  field_type: author_bio
+  description: SBB Swiss Stationboard Live was created by David M., a public transport enthusiast and updated by Jens-Christian Fischer to work with polling GET Urls (to make the Stationboard update)
+  github_url: https://github.com/notaprogrammer-alt
+  learn_more_url: https://www.instagram.com/david_meury/
+- keyname: station_name
+  field_type: string
+  name: Name der Haltestelle
+  default: Zürich HB
+  description: Anzeigename der Haltestelle
+- keyname: station_id
+  field_type: string
+  name: Stop
+  default: 8503000
+  description: ID der Haltestelle. Diese muss leider manuell gesucht werden, z.B. via <a href="http://transport.opendata.ch/v1/locations?query=Basel">http://transport.opendata.ch/v1/locations?query=Basel</a> (siehe <a href="https://transport.opendata.ch/docs.html">https://transport.opendata.ch/docs.html</a>)
+- keyname: walking_time
+  field_type: number
+  placeholder: '5'
+  name: Fussweg zur Haltestelle
+  description: "(z.B. gib für 5 Minuten Fussweg bis zur Haltestelle die Zahl 5 ein)"
+  help_text: Gib die Anzahl Minuten für deinen Fussweg zur Haltestelle ein.
+- keyname: transport_hidegroups
+  field_type: text
+  placeholder: tram, EXT, NJ
+  name: Einzelne Verkehrsmittel im Fahrplan ausblenden
+  description: "(z.B. bus, tram, IR, ICE, S)"
+  help_text: Gib die Fahrzeug-Kategorien oder die Bezeichnungen aller Verkehrsmittel ein, die du ausblenden möchtest. (Mit Kommas getrennt) Unterstützte Formate sind die offiziellen Fahrzeug-Kategorien (train, tram, ship, bus, cableway) und die wichtigsten Bezeichnungen (IC, IR, S, RE, EC, EXT, R, RJ,  PE, ICE, TGV, D, RB, REX)
+  optional: true
+- keyname: linetarget_filter
+  field_type: text
+  placeholder: 11Auz, 14Tri
+  name: Ungewünschte Linien im Fahrplan filtern
+  description: "(z.B. 14Tri, 8Klu, 11Aes für die Linie 14 Richtung Zürich, Triemli und die Linie 8 Richtung Zürich, Klusplatz und die Linie 11 Richtung Aesch)"
+  help_text: Filtere ungewünschte Linien und Ziele aus der Anzeige heraus. (Mit Kommas getrennt)
+  optional: true
+- keyname: target_hidewords
+  field_type: text
+  placeholder: Zürich, Bern
+  name: Einzelne Wörter im Fahrplan ausblenden
+  description: "(z.B. Bahnhof, Zürich, ZOB, City)"
+  help_text: Gib Wörter ein, die du in der Tabelle ausblenden möchtest. (Mit Kommas getrennt)
+  optional: true
+- keyname: target_abbreviations
+  field_type: text
+  placeholder: Bahnhof=Bhf., Zürich=ZH
+  name: Einzelne Wörter im Fahrplan abkürzen
+  description: "(z.B. Basel=BS, Stauffacher=Stauff., Barfüsserplatz=Barfi)"
+  help_text: Gib an, welche Wörter du in der Tabelle wie abkürzen möchtest. (Mit Kommas getrennt)
+  optional: true
+- keyname: minDepartureOffset
+  field_type: number
+  placeholder: '10'
+  name: Zeitfilter für Abfahrtsanzeige
+  description: Alle Abfahrten, die weniger als die angegebenen Minuten in der Zukunft liegen, werden ausgeblendet.
+  help_text: Gib zum Beispiel 10 ein, damit das Gerät die früheste angezeigte Abfahrt in 10 Minuten angibt.
+- keyname: cableway_icon
+  field_type: select
+  options:
+  - Zahnradbahn
+  - Gondel
+  default: Gondel
+  name: Bevorzugtes Seilbahn-Icon
+  description: "(Zahnradbahn oder Gondel)"
+  help_text: Wähle „Zahnradbahn“ oder „Gondel“ für dein favorisiertes Icon.
+name: SBB Swiss Stationboard
+refresh_interval: 15

@@ -1,0 +1,303 @@
+{% assign station = trmnl.plugin_settings.custom_fields_values.station_name | default: "Zürich, Im Hagacker" %}
+{% assign station_id = trmnl.plugin_settings.custom_fields_values.station_id | default: "8591209" %}
+{% assign walkingTime = trmnl.plugin_settings.custom_fields_values.walking_time | default: 0 %}
+{% assign abbr_string = trmnl.plugin_settings.custom_fields_values.target_abbreviations | default: 0 %}
+{% assign hidewords = trmnl.plugin_settings.custom_fields_values.target_hidewords | default: 0 %}
+{% assign linetarget_filter = trmnl.plugin_settings.custom_fields_values.linetarget_filter | default: 0 %}
+{% assign minDepartureOffset = trmnl.plugin_settings.custom_fields_values.min_departure_offset | default: 0 %}
+{% assign transportHideGroups = trmnl.plugin_settings.custom_fields_values.transport_hidegroups | default: 0 %}
+{% assign cablewayIcon = trmnl.plugin_settings.custom_fields_values.cableway_icon | default: "Gondel" %}
+
+<div style="display:flex;flex-direction:column;height:100%;width:100%;">
+  <div style="flex:1 1 auto;display:flex;flex-direction:column;width:100%;">
+    <div style="width:100%;padding-left:8px;padding-right:8px;box-sizing:border-box;">
+      <table class="table table--condensed" style="width:100%;margin:0;table-layout:fixed;">
+        <thead>
+          <tr>
+            <!-- Spalte 1: Symbol (5% links) – Name nur im Code -->
+            <th class="col-sym"><span class="sr-only">Symbol</span></th>
+            <!-- Spalte 2: Liniennummer (10% links) – Name nur im Code -->
+            <th class="col-lineno"><span class="sr-only">Liniennummer</span></th>
+            <!-- Spalte 3: Linie (40% links) – sichtbar -->
+            <th class="col-linie"><span class="title title--big">Linie</span></th>
+            <!-- Spalte 4: Abfahrt (15% rechts) – sichtbar -->
+            <th class="col-abfahrt"><span class="title title--big">Abfahrt</span></th>
+            <!-- Spalte 5: Verspätung/Infos (15% rechts) – Name nur im Code -->
+            <th class="col-delay"><span class="sr-only">Verspätung / Infos</span></th>
+            <!-- Spalte 6: Los um (15% rechts) – sichtbar -->
+            <th class="col-losum"><span class="title title--big">Los um</span></th>
+          </tr>
+        </thead>
+        <tbody id="departures-body">
+          <tr>
+            <td colspan="6"><span class="label label--big">Lade Daten…</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="title_bar" style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;width:100%;">
+    <div style="display:flex;align-items:center;">
+      <img class="image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAAAAABXZoBIAAAAAXNSR0IArs4c6QAAAGBJREFUKJHd0EEOwCAIBMDd7f8/3MTQAwVRa3qXi8gYRIFjgu9qAGgA2JRVFfP0Mt8mFvOSdWzVPLXAW4N1ZV7wMSu3BlBb+m9bHjInqqNHxCFh1WwgLNq/S5h1+Mpj4gGrAxoVOFGx+gAAAABJRU5ErkJggg=="/>
+      <span class="title" style="margin-left:10px;">Live-Fahrplan</span>
+    </div>
+    <span class="instance" style="margin-left:auto;">{{ station }}</span>
+    <span class="instance">{{ trmnl.system.timestamp_utc | plus: trmnl.user.utc_offset | date: "%d.%m.%y - %H:%M" }}</span>
+
+  </div>
+</div>
+
+<!-- Darstellung (nur CSS) -->
+<style>
+  :root { --gap-45: 25px; } /* Abstand zwischen Spalte 4 und 5 */
+
+  /* Spaltenbreiten & Basis-Ausrichtung (ergibt zusammen 100%) */
+  .col-sym    { width:5%;  text-align:left; }
+  .col-lineno { width:10%; text-align:left; }
+  .col-linie  { width:40%; text-align:left; }
+  .col-abfahrt{ width:15%; text-align:right; padding-right:0 !important; white-space:nowrap; }
+  .col-delay  { width:15%; text-align:right; white-space:nowrap; padding-left:var(--gap-45); }
+  .col-losum  { width:15%; text-align:right; padding-right:2px !important; white-space:nowrap; } /* kleiner Puffer, damit „m“ nicht clippt */
+
+  /* dieselben Regeln auch für Body-Zellen */
+  .table td.col-sym,
+  .table td.col-lineno,
+  .table td.col-linie,
+  .table td.col-abfahrt,
+  .table td.col-delay,
+  .table td.col-losum { vertical-align:middle; }
+
+  /* Überschriften der Zeitspalten strikt rechtsbündig */
+  .table th.col-abfahrt,
+  .table th.col-losum { text-align:right !important; }
+  .table th.col-abfahrt .title,
+  .table th.col-losum .title { display:block; text-align:right !important; margin:0; }
+
+  /* Unsichtbare Spaltenüberschriften (nur für Semantik) */
+  .sr-only {
+    position:absolute !important;
+    width:1px; height:1px;
+    margin:-1px; padding:0; border:0;
+    clip:rect(0 0 0 0); overflow:hidden; white-space:nowrap;
+  }
+
+  /* saubere Ziffern */
+  .time { font-variant-numeric: tabular-nums; }
+  .table { border-collapse: separate; border-spacing: 0; }
+</style>
+
+<script>
+  /* -------- Liquid -> data-Attribute -------- */
+  document.body.setAttribute('data-station', '{{ station }}');
+  document.body.setAttribute('data-station_id', '{{ station_id }}');
+  document.body.setAttribute('data-walkingtime', '{{ walkingTime }}');
+  document.body.setAttribute('data-abbrs', `{{ abbr_string }}`);
+  document.body.setAttribute('data-hidewords', `{{ hidewords }}`);
+  document.body.setAttribute('data-linetargetfilter', `{{ linetarget_filter }}`);
+  document.body.setAttribute('data-mindepartureoffset', '{{ minDepartureOffset }}');
+  document.body.setAttribute('data-hidegroups', `{{ transportHideGroups }}`);
+  document.body.setAttribute('data-cablewayicon', `{{ cablewayIcon }}`); /* neues Feld */
+
+  /* -------- Helper -------- */
+  function isBlank(v) { if (v == null) return true; const s = String(v).trim(); return s === '' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined'; }
+  function getData(attr, fb = '') { const v = document.body.getAttribute(attr); if (isBlank(v) || String(v).trim() === '0') return fb; return String(v).trim(); }
+  function toInt(v, fb = 0) { if (isBlank(v) || String(v).trim() === '0') return 0; const n = parseInt(String(v).trim(), 10); return Number.isFinite(n) ? n : fb; }
+  function getDataFromAny(v) { if (v == null) return ''; const s = String(v).trim(); if (s === '' || s === '0' || s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined') return ''; return s; }
+  function parseCsv(v) { const s = getDataFromAny(v); if (!s) return []; return s.split(/[,\n]/).map(x => x.trim()).filter(Boolean); }
+  function parseAbbrPairs(v) {
+    const raw = getDataFromAny(v); if (!raw) return [];
+    return raw.split(/[,\n]/).map(x => x.trim()).filter(Boolean).map(t => {
+      const i = t.indexOf('=');
+      if (i === -1) return null;
+      const full = t.slice(0, i).trim(), abbr = t.slice(i + 1).trim();
+      return (full && abbr) ? [full, abbr] : null;
+    }).filter(Boolean);
+  }
+  function esc(t) { return String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
+  /* -------- Icons & Gruppen -------- */
+  function mapCategoryToGroup(category) {
+    const c = String(category || '').toUpperCase();
+    if (["IC", "IR", "S", "RE", "EC", "EXT", "R", "RJ", "PE", "ICE", "TGV", "D", "RB", "REX"].includes(c)) return "train";
+    if (["T", "TRAM"].includes(c)) return "tram";
+    if (["BUS", "B", "NFB", "SN"].includes(c)) return "bus";
+    if (["BAT", "SHIP", "BOAT", "FERRY"].includes(c)) return "ship";
+    if (["CABLEWAY", "ROPEWAY", "AERIALWAY", "LIFT", "GONDOLA", "FUN", "FUNICULAR"].includes(c)) return "cableway";
+    return "";
+  }
+
+  function getCablewayIconHtml() {
+    const pref = String(getData('data-cablewayicon', 'Gondel')).toLowerCase();
+    if (pref === 'zahnradbahn') {
+      return '<img class="image" src="https://img.icons8.com/ios/25/funicular.png" alt="funicular" style="height:25px;vertical-align:middle;" />';
+    }
+    return '<img class="image" src="https://img.icons8.com/ios/25/cable-car.png" alt="cable-car" style="height:25px;vertical-align:middle;" />';
+  }
+
+  function getLineSymbol(category) {
+    const c = String(category || '').toUpperCase();
+    if (c === "T" || c === "TRAM")
+      return '<img class="image" src="https://img.icons8.com/ios/25/tram.png" style="height:25px;vertical-align:middle;" />';
+    if (["IC", "IR", "S", "RE", "EC", "EXT", "R", "RJ", "PE", "ICE"].includes(c))
+      return '<img class="image" src="https://img.icons8.com/ios-filled/25/train.png" style="height:25px;vertical-align:middle;" />';
+    if (["BUS", "NFB", "SN", "B"].includes(c))
+      return '<img class="image" src="https://img.icons8.com/ios-filled/25/bus.png" style="height:25px;vertical-align:middle;" />';
+    const g = mapCategoryToGroup(c);
+    if (g === "ship")
+      return '<img class="image" src="https://img.icons8.com/ios/25/water-transportation.png" style="height:25px;vertical-align:middle;" />';
+    if (g === "cableway")
+      return getCablewayIconHtml();
+    return '<img class="image" src="https://img.icons8.com/ios-filled/25/bus.png" style="height:25px;vertical-align:middle;" />';
+  }
+
+  /* -------- Textaufbereitung -------- */
+  function cleanTarget(text, hidewords, abbrList) {
+    let out = String(text || '');
+    const hw = Array.isArray(hidewords) ? hidewords : [];
+    if (hw.length > 0) {
+      hw.forEach(w => {
+        if (w && String(w).trim() !== '') {
+          const word = String(w).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const safe = new RegExp("\\b" + word + "\\b(\\s+\\S+){0,2}\\s+Bahnhof", "i");
+          if (!safe.test(out)) {
+            const re = new RegExp("\\b" + word + "\\b", "gi");
+            out = out.replace(re, "");
+          }
+        }
+      });
+      out = out.replace(/\s{2,}/g, " ").replace(/,\s*,/g, ",").replace(/(^[,\s]+|[,\s]+$)/g, "");
+    }
+    const pairs = Array.isArray(abbrList) ? abbrList : [];
+    if (pairs.length > 0) {
+      pairs.forEach(([full, abbr]) => {
+        if (!full || !abbr) return;
+        const escf = String(full).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        out = out.replace(new RegExp("\\b" + escf + "\\b", "gi"), abbr);
+      });
+    }
+    return out;
+  }
+
+  function getTargetPrefix(target) {
+    const t = String(target || ''); const parts = t.split(",");
+    const part = (parts.length > 1 ? parts[1] : parts[0] || '').trim();
+    return (part.substring(0, 3) || '').toLowerCase();
+  }
+
+  const CATEGORY_PREFIX_SET = new Set(["IC", "IR", "S", "RE", "EC", "EXT", "R", "RJ", "PE", "ICE", "SN"]);
+  function formatLineNumber(category, number) {
+    const cat = String(category || "").toUpperCase().trim();
+    let num = String(number || "").trim(); if (!num) return "";
+    const compact = num.replace(/\s+/g, "");
+    if (CATEGORY_PREFIX_SET.has(cat)) {
+      if (compact.toUpperCase().startsWith(cat)) return compact;
+      return cat + compact.replace(/^[A-Za-z]+/, "");
+    }
+    return compact;
+  }
+
+  function parseHiddenGroups(v) { return parseCsv(v).map(s => s.toLowerCase()); }
+
+
+
+  let _cachedStationName = null, _cachedStationId = null, _inFlight = false;
+
+
+
+  function fetchDepartures() {
+    // we get the data from the stationboard call in the "station" and "stationboard" variables
+    const tbody = document.getElementById('departures-body');
+
+
+    const station = getData('data-station', 'Zürich, Im Hagacker');
+    const station_id = getData('data-station_id', '8591209');
+    const walkingTime = toInt(getData('data-walkingtime'), 0);
+    const minOffset = toInt(getData('data-mindepartureoffset'), 0);
+
+    const abbrList = parseAbbrPairs(getData('data-abbrs'));
+    const hidewords = parseCsv(getData('data-hidewords'));
+    const filterList = parseCsv(getData('data-linetargetfilter')).map(s => s.toLowerCase());
+    const hidden = parseHiddenGroups(getData('data-hidegroups'));
+    const data = {};
+    data['stationboard'] = {{ stationboard | json }}
+
+
+  if (isBlank(station) || isBlank(station_id)) {
+    tbody.innerHTML = `<tr><td colspan="6"><span class="label label--small" style="color:#d10505;">Keine Station konfiguriert.</span></td></tr>`;
+    return;
+  }
+
+
+  let rowsHtml = '';
+
+  if (!data || !Array.isArray(data.stationboard) || data.stationboard.length === 0) {
+    rowsHtml = `<tr><td colspan="6"><span class="label label--big">Keine Abfahrten gefunden</span></td></tr>`;
+    tbody.innerHTML = rowsHtml;
+    return;
+  }
+
+  const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Europe/Zurich' };
+  const now = new Date();
+  const minDeparture = new Date(now.getTime() + (minOffset || 0) * 60000);
+
+  let shown = 0;
+  const maxRows = 5;
+
+  for (const entry of data.stationboard) {
+    if (shown >= maxRows) break;
+
+    const category = entry?.category || "";
+    const group = mapCategoryToGroup(category);
+    if (hidden.includes(group)) continue;
+    if (hidden.includes(String(category).toLowerCase())) continue;
+
+    const depRaw = entry?.stop?.departure || '';
+    const departureTime = new Date(depRaw);
+    if (!(departureTime instanceof Date) || isNaN(departureTime)) continue;
+    if (departureTime < minDeparture) continue;
+
+    const lineNumber = formatLineNumber(category, entry?.number || "");
+    const target = entry?.to || "";
+    const filterCode = (lineNumber + getTargetPrefix(target)).toLowerCase();
+    if (filterList.includes(filterCode)) continue;
+
+    const displayTarget = cleanTarget(target, hidewords, abbrList);
+
+    let delayMinutes = 0, delayHtml = '';
+    const progRaw = entry?.stop?.prognosis?.departure || '';
+    if (!isBlank(progRaw)) {
+      const prog = new Date(progRaw);
+      if (prog instanceof Date && !isNaN(prog)) delayMinutes = Math.round((prog - departureTime) / 60000);
+    }
+    if (delayMinutes > 0) {
+      delayHtml = `<span class="label label--inverted label--big" style="font-weight:bold;">+${delayMinutes} min</span>`;
+    } else if (delayMinutes < 0) {
+      delayHtml = `<span class="label label--inverted label--big" style="font-weight:bold;">${delayMinutes} min</span>`;
+    }
+
+    const startOffset = Math.max(0, (walkingTime || 0) - delayMinutes);
+    const losUm = new Date(departureTime.getTime() - startOffset * 60000);
+
+    rowsHtml += `
+          <tr style="line-height:1.15;">
+            <td class="col-sym">${getLineSymbol(category)}</td>
+            <td class="col-lineno"><span class="label label--big">${esc(lineNumber)}</span></td>
+            <td class="col-linie"><span class="label label--big" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(displayTarget)}</span></td>
+            <td class="col-abfahrt"><span class="label label--big time">${departureTime.toLocaleTimeString('de-CH', timeOptions)}</span></td>
+            <td class="col-delay">${delayHtml}</td>
+            <td class="col-losum"><span class="label label--big time">${losUm.toLocaleTimeString('de-CH', timeOptions)}</span></td>
+          </tr>
+        `;
+    shown++;
+  }
+
+  if (shown === 0) {
+    rowsHtml = `<tr><td colspan="6"><span class="label label--big">Keine passenden Abfahrten gefunden</span></td></tr>`;
+  }
+  tbody.innerHTML = rowsHtml;
+
+  }
+
+  fetchDepartures();
+</script>
