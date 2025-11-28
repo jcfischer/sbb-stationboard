@@ -4,7 +4,7 @@ no_screen_padding: 'no'
 dark_mode: 'no'
 static_data: ''
 polling_verb: get
-polling_url: https://transport.opendata.ch/v1/stationboard?id={{station_id}}&limit=10
+polling_url: https://transport.opendata.ch/v1/stationboard?id={{station_id}}&limit=30&fields[]=stationboard/category&fields[]=stationboard/number&fields[]=stationboard/to&fields[]=stationboard/stop/departure&fields[]=stationboard/stop/prognosis/departure
 polling_headers: ''
 polling_body: ''
 id: 166116
