@@ -13,8 +13,7 @@ custom_fields:
   name: About This Plugin
   field_type: author_bio
   description: SBB Swiss Stationboard Live was created by David M., a public transport enthusiast and updated by Jens-Christian Fischer to work with polling GET Urls (to make the Stationboard update)
-  github_url: https://github.com/notaprogrammer-alt
-  learn_more_url: https://www.instagram.com/david_meury/
+  github_url: https://github.com/jcfischer/sbb-stationboard
 - keyname: station_name
   field_type: string
   name: Name der Haltestelle
