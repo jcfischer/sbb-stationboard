@@ -1,6 +1,6 @@
 {% assign station = trmnl.plugin_settings.custom_fields_values.station_name | default: "Zürich, Im Hagacker" %}
 {% assign station_id = trmnl.plugin_settings.custom_fields_values.station_id | default: "8591209" %}
-{% assign walkingTime = trmnl.plugin_settings.custom_fields_values.walking_time | default: 0 %}
+{% assign walkingTime = trmnl.plugin_settings.custom_fields_values.walking_time | plus: 0 %}
 {% assign abbr_string = trmnl.plugin_settings.custom_fields_values.target_abbreviations | default: 0 %}
 {% assign hidewords = trmnl.plugin_settings.custom_fields_values.target_hidewords | default: 0 %}
 {% assign linetarget_filter = trmnl.plugin_settings.custom_fields_values.linetarget_filter | default: 0 %}
@@ -20,7 +20,9 @@
             <th class="col-linie"><span class="title title--big">Linie</span></th>
             <th class="col-abfahrt"><span class="title title--big">Abfahrt</span></th>
             <th class="col-delay"><span class="sr-only">Verspätung / Infos</span></th>
+{% if walkingTime >0  %}
             <th class="col-losum"><span class="title title--big">Los um</span></th>
+{% endif %}
           </tr>
         </thead>
         <tbody id="departures-body">
@@ -56,15 +58,23 @@
     text-align: left;
   }
 
+  .col-sym img {
+    filter: grayscale(100%) contrast(200%)  invert(1);
+  }
+
   .col-lineno {
     width: 10%;
     text-align: left;
   }
 
+  {% if walkingTime > 0 %}
   .col-linie {
     width: 39%;
     text-align: left;
   }
+  {% else %}
+  .col-linie  { width:50%;  text-align:left; }
+  {% endif %}
 
   .col-abfahrt {
     width: 15%;
@@ -101,9 +111,19 @@
   document.body.setAttribute('data-cablewayicon', `{{ cablewayIcon }}`);
 
   /* -------- Inject stationboard data -------- */
-  window.stationboardData = {
-    stationboard: {{ stationboard | json }}
-  };
+  window.stationboardData = { stationboard: []};
+
+  {% assign id_count = station_id | split: "," | size  | minus: 1 %}
+
+  {% for i in (0..id_count) %}
+  {% capture idx_key %}IDX_{{ i }}{% endcapture %}
+  {% assign current_data = [idx_key] %}
+  {% if current_data %}
+  window.stationboardData.stationboard.push(...{{ current_data.stationboard | json }})
+  {% endif %}
+  {% endfor %}
+  window.stationboardData.stationboard.sort((a,b) =>  a.stop['departure'] > b.stop['departure'])
+
 
   /* -------- Render with full screen parameters -------- */
   renderDepartures(12, 'big');

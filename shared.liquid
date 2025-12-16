@@ -73,25 +73,25 @@
   function getCablewayIconHtml() {
     const pref = String(getData('data-cablewayicon', 'Gondel')).toLowerCase();
     if (pref === 'zahnradbahn') {
-      return '<img class="image" src="https://img.icons8.com/ios/25/funicular.png" alt="funicular" style="height:25px;vertical-align:middle;" />';
+      return '<img class="image" src="https://cdn.jsdelivr.net/npm/@sbb-esta/pictograms@0.1.0/picto/funicular-railway-right.svg" alt="funicular" style="height:25px;vertical-align:middle;" />';
     }
-    return '<img class="image" src="https://img.icons8.com/ios/25/cable-car.png" alt="cable-car" style="height:25px;vertical-align:middle;" />';
+    return '<img class="image" src="https://cdn.jsdelivr.net/npm/@sbb-esta/pictograms@0.1.0/picto/cableway-right.svg" alt="cable-car" style="height:25px;vertical-align:middle;" />';
   }
 
   function getLineSymbol(category) {
     const c = String(category || '').toUpperCase();
     if (c === "T" || c === "TRAM")
-      return '<img class="image" src="https://img.icons8.com/ios/25/tram.png" style="height:25px;vertical-align:middle;" />';
+      return '<img class="image" src="https://cdn.jsdelivr.net/npm/@sbb-esta/pictograms@0.1.0/picto/tram-right.svg" style="height:25px;vertical-align:middle;" />';
     if (["IC", "IR", "S", "RE", "EC", "EXT", "R", "RJ", "PE", "ICE"].includes(c))
-      return '<img class="image" src="https://img.icons8.com/ios-filled/25/train.png" style="height:25px;vertical-align:middle;" />';
+      return '<img class="image" src="https://cdn.jsdelivr.net/npm/@sbb-esta/pictograms@0.1.0/picto/train-right.svg" style="height:25px;vertical-align:middle;" />';
     if (["BUS", "NFB", "SN", "B"].includes(c))
-      return '<img class="image" src="https://img.icons8.com/ios-filled/25/bus.png" style="height:25px;vertical-align:middle;" />';
+      return '<img class="image" src="https://cdn.jsdelivr.net/npm/@sbb-esta/pictograms@0.1.0/picto/bus-right.svg" style="height:25px;vertical-align:middle;" />';
     const g = mapCategoryToGroup(c);
     if (g === "ship")
-      return '<img class="image" src="https://img.icons8.com/ios/25/water-transportation.png" style="height:25px;vertical-align:middle;" />';
+      return '<img class="image" src="https://cdn.jsdelivr.net/npm/@sbb-esta/pictograms@0.1.0/picto/jetty-right.svg" style="height:25px;vertical-align:middle;" />';
     if (g === "cableway")
       return getCablewayIconHtml();
-    return '<img class="image" src="https://img.icons8.com/ios-filled/25/bus.png" style="height:25px;vertical-align:middle;" />';
+    return '<img class="image" src="https://cdn.jsdelivr.net/npm/@sbb-esta/pictograms@0.1.0/picto/bus-right.svg" style="height:25px;vertical-align:middle;" />';
   }
 
   /* -------- Text Processing -------- */
@@ -214,6 +214,10 @@
       const startOffset = Math.max(0, (walkingTime || 0) - delayMinutes);
       const losUm = new Date(departureTime.getTime() - startOffset * 60000);
 
+      let losUmCol = "";
+      if(walkingTime > 0){
+        losUmCol = `<td class="col-losum"><span class="label label--${labelSize} time">${losUm.toLocaleTimeString('de-CH', timeOptions)}</span></td>`;
+      }
       rowsHtml += `
         <tr style="line-height:1.15;">
           <td class="col-sym">${getLineSymbol(category)}</td>
@@ -221,7 +225,7 @@
           <td class="col-linie"><span class="label label--${labelSize}" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(displayTarget)}</span></td>
           <td class="col-abfahrt"><span class="label label--${labelSize} time">${departureTime.toLocaleTimeString('de-CH', timeOptions)}</span></td>
           <td class="col-delay">${delayHtml}</td>
-          <td class="col-losum"><span class="label label--${labelSize} time">${losUm.toLocaleTimeString('de-CH', timeOptions)}</span></td>
+          ${losUmCol}
         </tr>
       `;
       shown++;

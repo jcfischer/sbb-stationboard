@@ -1,6 +1,6 @@
 {% assign station = trmnl.plugin_settings.custom_fields_values.station_name | default: "Zürich, Im Hagacker" %}
 {% assign station_id = trmnl.plugin_settings.custom_fields_values.station_id | default: "8591209" %}
-{% assign walkingTime = trmnl.plugin_settings.custom_fields_values.walking_time | default: 0 %}
+{% assign walkingTime = trmnl.plugin_settings.custom_fields_values.walking_time | plus: 0 %}
 {% assign abbr_string = trmnl.plugin_settings.custom_fields_values.target_abbreviations | default: 0 %}
 {% assign hidewords = trmnl.plugin_settings.custom_fields_values.target_hidewords | default: 0 %}
 {% assign linetarget_filter = trmnl.plugin_settings.custom_fields_values.linetarget_filter | default: 0 %}
@@ -25,7 +25,9 @@
             <!-- Spalte 5: Verspätung/Infos (15% rechts) – Name nur im Code -->
             <th class="col-delay"><span class="sr-only">Verspätung / Infos</span></th>
             <!-- Spalte 6: Los um (10% rechts) – sichtbar -->
+            {% if walkingTime > 0 %}
             <th class="col-losum"><span class="title title--small">Los</span></th>
+            {% endif %}
           </tr>
         </thead>
         <tbody id="departures-body">
@@ -53,8 +55,13 @@
 
   /* Column widths for half vertical layout */
   .col-sym    { width:8%;  text-align:left; }
+  .col-sym img { filter: grayscale(100%) contrast(200%) invert(1); }
   .col-lineno { width:10%; text-align:left; }
+  {% if walkingTime > 0 %}
   .col-linie  { width:25%; text-align:left; }
+  {% else %}
+  .col-linie  { width:35%;  text-align:left; }
+  {% endif %}
   .col-abfahrt{ width:15%; text-align:right; padding-right:0 !important; white-space:nowrap; }
   .col-delay  { width:20%; text-align:right; white-space:nowrap; padding-left:var(--gap-45); }
   .col-losum  { width:10%; text-align:right; padding-right:1px !important; white-space:nowrap; }
@@ -73,9 +80,18 @@
   document.body.setAttribute('data-cablewayicon', `{{ cablewayIcon }}`);
 
   /* -------- Inject stationboard data -------- */
-  window.stationboardData = {
-    stationboard: {{ stationboard | json }}
-  };
+  window.stationboardData = { stationboard: []};
+
+  {% assign id_count = station_id | split: "," | size  | minus: 1 %}
+
+  {% for i in (0..id_count) %}
+  {% capture idx_key %}IDX_{{ i }}{% endcapture %}
+  {% assign current_data = [idx_key] %}
+  {% if current_data %}
+  window.stationboardData.stationboard.push(...{{ current_data.stationboard | json }})
+  {% endif %}
+  {% endfor %}
+  window.stationboardData.stationboard.sort((a,b) =>  a.stop['departure'] > b.stop['departure'])
 
   /* -------- Render with half vertical parameters -------- */
   renderDepartures(12, 'big');
