@@ -4,7 +4,7 @@ no_screen_padding: 'no'
 dark_mode: 'no'
 static_data: ''
 polling_verb: get
-polling_url: https://transport.opendata.ch/v1/stationboard?id={{station_id}}&limit=30&fields[]=stationboard/category&fields[]=stationboard/number&fields[]=stationboard/to&fields[]=stationboard/stop/departure&fields[]=stationboard/stop/prognosis/departure
+polling_url: "{% assign ids = station_id | split: \",\" %}\r\n{% for id in ids %}\r\nhttps://transport.opendata.ch/v1/stationboard?id={{ id }}&limit=30&fields[]=stationboard/category&fields[]=stationboard/number&fields[]=stationboard/to&fields[]=stationboard/stop/departure&fields[]=stationboard/stop/prognosis/departure\r\n{% endfor %}\r\n"
 polling_headers: ''
 polling_body: ''
 id: 166116
@@ -20,7 +20,7 @@ custom_fields:
   default: Zürich HB
   description: Anzeigename der Haltestelle
 - keyname: station_id
-  field_type: string
+  field_type: multi_string
   name: Stop
   default: 8503000
   description: ID der Haltestelle. Diese muss leider manuell gesucht werden, z.B. via <a href="http://transport.opendata.ch/v1/locations?query=Basel">http://transport.opendata.ch/v1/locations?query=Basel</a> (siehe <a href="https://transport.opendata.ch/docs.html">https://transport.opendata.ch/docs.html</a>)

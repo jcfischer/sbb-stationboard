@@ -78,9 +78,18 @@
   document.body.setAttribute('data-cablewayicon', `{{ cablewayIcon }}`);
 
   /* -------- Inject stationboard data -------- */
-  window.stationboardData = {
-    stationboard: {{ stationboard | json }}
-  };
+  window.stationboardData = { stationboard: []};
+
+  {% assign id_count = station_id | split: "," | size  | minus: 1 %}
+
+  {% for i in (0..id_count) %}
+  {% capture idx_key %}IDX_{{ i }}{% endcapture %}
+  {% assign current_data = [idx_key] %}
+  {% if current_data %}
+  window.stationboardData.stationboard.push(...{{ current_data.stationboard | json }})
+  {% endif %}
+  {% endfor %}
+  window.stationboardData.stationboard.sort((a,b) =>  a.stop['departure'] > b.stop['departure'])
 
   /* -------- Render with quadrant parameters -------- */
   renderDepartures(5, 'big');
