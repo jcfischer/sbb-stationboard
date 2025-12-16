@@ -214,6 +214,10 @@
       const startOffset = Math.max(0, (walkingTime || 0) - delayMinutes);
       const losUm = new Date(departureTime.getTime() - startOffset * 60000);
 
+      let losUmCol = "";
+      if(walkingTime > 0){
+        losUmCol = `<td class="col-losum"><span class="label label--${labelSize} time">${losUm.toLocaleTimeString('de-CH', timeOptions)}</span></td>`;
+      }
       rowsHtml += `
         <tr style="line-height:1.15;">
           <td class="col-sym">${getLineSymbol(category)}</td>
@@ -221,7 +225,7 @@
           <td class="col-linie"><span class="label label--${labelSize}" style="max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(displayTarget)}</span></td>
           <td class="col-abfahrt"><span class="label label--${labelSize} time">${departureTime.toLocaleTimeString('de-CH', timeOptions)}</span></td>
           <td class="col-delay">${delayHtml}</td>
-          <td class="col-losum"><span class="label label--${labelSize} time">${losUm.toLocaleTimeString('de-CH', timeOptions)}</span></td>
+          ${losUmCol}
         </tr>
       `;
       shown++;

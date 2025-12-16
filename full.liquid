@@ -1,6 +1,6 @@
 {% assign station = trmnl.plugin_settings.custom_fields_values.station_name | default: "Zürich, Im Hagacker" %}
 {% assign station_id = trmnl.plugin_settings.custom_fields_values.station_id | default: "8591209" %}
-{% assign walkingTime = trmnl.plugin_settings.custom_fields_values.walking_time | default: 0 %}
+{% assign walkingTime = trmnl.plugin_settings.custom_fields_values.walking_time | plus: 0 %}
 {% assign abbr_string = trmnl.plugin_settings.custom_fields_values.target_abbreviations | default: 0 %}
 {% assign hidewords = trmnl.plugin_settings.custom_fields_values.target_hidewords | default: 0 %}
 {% assign linetarget_filter = trmnl.plugin_settings.custom_fields_values.linetarget_filter | default: 0 %}
@@ -20,7 +20,9 @@
             <th class="col-linie"><span class="title title--big">Linie</span></th>
             <th class="col-abfahrt"><span class="title title--big">Abfahrt</span></th>
             <th class="col-delay"><span class="sr-only">Verspätung / Infos</span></th>
+{% if walkingTime >0  %}
             <th class="col-losum"><span class="title title--big">Los um</span></th>
+{% endif %}
           </tr>
         </thead>
         <tbody id="departures-body">
@@ -61,10 +63,14 @@
     text-align: left;
   }
 
+  {% if walkingTime > 0 %}
   .col-linie {
     width: 39%;
     text-align: left;
   }
+  {% else %}
+  .col-linie  { width:50%;  text-align:left; }
+  {% endif %}
 
   .col-abfahrt {
     width: 15%;
