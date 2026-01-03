@@ -58,7 +58,7 @@ custom_fields:
   description: "(z.B. Basel=BS, Stauffacher=Stauff., Barfüsserplatz=Barfi)"
   help_text: Gib an, welche Wörter du in der Tabelle wie abkürzen möchtest. (Mit Kommas getrennt)
   optional: true
-- keyname: minDepartureOffset
+- keyname: min_departure_offset
   field_type: number
   placeholder: '10'
   name: Zeitfilter für Abfahrtsanzeige
